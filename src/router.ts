@@ -1,5 +1,6 @@
 import HomeView from '@/views/HomeView.vue'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { HomeState } from './enums'
 
 const ROUTES: RouteRecordRaw[] = [
   {
@@ -9,8 +10,42 @@ const ROUTES: RouteRecordRaw[] = [
   },
   {
     path: '/',
-    name: 'home',
+    name: 'Home',
     component: HomeView,
+    props: () => ({
+      state: HomeState.Default,
+    }),
+  },
+  {
+    path: '/edit',
+    name: 'Edit',
+    component: HomeView,
+    props: () => ({
+      state: HomeState.Update,
+    }),
+  },
+  {
+    path: '/delete',
+    name: 'Delete',
+    component: HomeView,
+    props: () => ({
+      state: HomeState.Delete,
+    }),
+  },
+  {
+    path: '/create',
+    name: 'Create Task',
+    component: () => import('@/views/CreateTaskView.vue'),
+  },
+  {
+    path: '/stats',
+    name: 'Statistics',
+    component: () => import('@/views/StatsView.vue'),
+  },
+  {
+    path: '/categories',
+    name: 'Categories',
+    component: () => import('@/views/CategoriesView.vue'),
   },
 ]
 

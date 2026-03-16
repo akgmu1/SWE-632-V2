@@ -6,18 +6,11 @@ import ManageCategoriesModal from '@/components/ManageCategoriesModal.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import StatsModal from '@/components/StatsModal.vue'
 import TaskItem from '@/components/TaskItem.vue'
-import ToolTip from '@/components/ToolTip.vue'
 import UpdateTaskModal from '@/components/UpdateTaskModal.vue'
-import { HomeState, ToolTipDirection } from '@/enums'
+import { HomeState } from '@/enums'
 import { categoryManager, type Category } from '@/schemas/category'
 import { deletedTaskManager, taskManager, type CreateTask, type Task } from '@/schemas/task'
 import { timeEntryManager, type CreateTimeEntry } from '@/schemas/timeEntry'
-import {
-  ArchiveBoxIcon,
-  PencilSquareIcon,
-  PresentationChartLineIcon,
-} from '@heroicons/vue/24/outline'
-import { PlusIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 import { computed, ref, type Ref } from 'vue'
 
 const logTimeModalRef: Ref<InstanceType<typeof LogTimeModal> | null> = ref(null)
@@ -30,8 +23,6 @@ function logTime(entry: CreateTimeEntry) {
   timeEntryManager.add(entry)
   refreshTasks()
 }
-
-const homeState: Ref<HomeState> = ref(HomeState.Default)
 
 const categories: Ref<Category[]> = ref(categoryManager.all())
 const tasks: Ref<Task[]> = ref(taskManager.all())
@@ -87,9 +78,9 @@ function updateTask(task: Task, subtask: boolean) {
 
 function taskClicked(id: number, isDeleted: boolean) {
   if (isDeleted) {
-    switch (homeState.value) {
+    switch (props.state) {
       case HomeState.Delete: {
-        homeState.value = HomeState.Default
+        // homeState.value = HomeState.Default
         selectedTask.value = deletedTaskManager.findBy('id', id)
         if (selectedTask.value !== undefined) {
           confirmRecoverModalRef.value!.showModal()
@@ -98,9 +89,9 @@ function taskClicked(id: number, isDeleted: boolean) {
       }
     }
   } else {
-    switch (homeState.value) {
+    switch (props.state) {
       case HomeState.Update: {
-        homeState.value = HomeState.Default
+        // homeState.value = HomeState.Default
         selectedTask.value = taskManager.findBy('id', id)
         if (selectedTask.value !== undefined) {
           updateModalRef.value!.showModal(selectedTask.value)
@@ -108,7 +99,7 @@ function taskClicked(id: number, isDeleted: boolean) {
         break
       }
       case HomeState.Delete: {
-        homeState.value = HomeState.Default
+        // homeState.value = HomeState.Default
         selectedTask.value = taskManager.findBy('id', id)
         if (selectedTask.value !== undefined) {
           confirmDeleteModalRef.value!.showModal()
@@ -149,62 +140,17 @@ function deleteCategory(category: Category) {
 }
 
 const statsModalRef: Ref<InstanceType<typeof StatsModal> | null> = ref(null)
+
+interface Props {
+  state: HomeState
+}
+
+const props = defineProps<Props>()
+// const homeState: Ref<HomeState> = ref(HomeState.Default)
 </script>
 
 <template>
   <main class="container mx-auto py-4">
-    <div class="mb-4 flex items-center justify-between">
-      <div class="text-2xl font-semibold">Task Manager</div>
-
-      <div v-if="homeState == HomeState.Default" class="flex items-center gap-2">
-        <ToolTip :direction="ToolTipDirection.Bottom" tip="Statistics">
-          <button class="btn btn-circle btn-info" @click="statsModalRef?.showModal()">
-            <PresentationChartLineIcon class="size-6" />
-          </button>
-        </ToolTip>
-
-        <ToolTip :direction="ToolTipDirection.Bottom" tip="Create">
-          <button class="btn btn-circle btn-success" @click="addButton">
-            <PlusIcon class="size-6" />
-          </button>
-        </ToolTip>
-
-        <ToolTip :direction="ToolTipDirection.Bottom" tip="Edit">
-          <button class="btn btn-circle" @click="homeState = HomeState.Update">
-            <PencilSquareIcon class="size-6" />
-          </button>
-        </ToolTip>
-
-        <ToolTip :direction="ToolTipDirection.Bottom" tip="Delete">
-          <button class="btn btn-circle btn-error" @click="homeState = HomeState.Delete">
-            <TrashIcon class="size-6" />
-          </button>
-        </ToolTip>
-      </div>
-
-      <div v-else>
-        <div class="flex items-center gap-2">
-          <ToolTip :direction="ToolTipDirection.Bottom" tip="Manage Categories">
-            <button
-              class="btn btn-circle"
-              @click="
-                () => {
-                  homeState = HomeState.Default
-                  manageCategoriesModalRef?.showModal()
-                }
-              "
-            >
-              <ArchiveBoxIcon class="size-6" />
-            </button>
-          </ToolTip>
-          <ToolTip :direction="ToolTipDirection.Bottom" tip="Cancel">
-            <button class="btn btn-circle btn-error" @click="homeState = HomeState.Default">
-              <XMarkIcon class="size-6" />
-            </button>
-          </ToolTip>
-        </div>
-      </div>
-    </div>
     <div class="mb-4 flex justify-center">
       <SearchBar v-model="search" />
     </div>
@@ -217,7 +163,7 @@ const statsModalRef: Ref<InstanceType<typeof StatsModal> | null> = ref(null)
         v-for="task in activeTasks"
         :key="task.id"
         :task="task"
-        :home-state="homeState"
+        :home-state="props.state"
         :is-deleted="false"
         @toggle="toggleTask"
         @clicked="taskClicked"
@@ -233,7 +179,7 @@ const statsModalRef: Ref<InstanceType<typeof StatsModal> | null> = ref(null)
         v-for="task in completedTasks"
         :key="task.id"
         :task="task"
-        :home-state="homeState"
+        :home-state="props.state"
         :is-deleted="false"
         @toggle="toggleTask"
         @clicked="taskClicked"
@@ -241,7 +187,7 @@ const statsModalRef: Ref<InstanceType<typeof StatsModal> | null> = ref(null)
     </div>
 
     <!-- List of recently deleted tasks -->
-    <div v-if="homeState === HomeState.Delete">
+    <div v-if="props.state === HomeState.Delete">
       <div class="mt-10 flex justify-between">
         <!-- TODO: mt-3 may not be correct here... -->
         <div class="text-xl" :class="{ 'mt-3': deletedTasks.length > 0 }">Recently Deleted</div>
@@ -259,7 +205,7 @@ const statsModalRef: Ref<InstanceType<typeof StatsModal> | null> = ref(null)
           v-for="task in filteredDeletedTasks"
           :key="task.id"
           :task="task"
-          :home-state="homeState"
+          :home-state="props.state"
           :is-deleted="true"
           @clicked="taskClicked"
         />
