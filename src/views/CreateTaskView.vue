@@ -121,6 +121,7 @@ function onConfirm() {
     completed: false,
     dueDate: dueDate.value,
     category: finalCategory,
+    created: dateTrim(new Date()),
   })
 
   saveRememberedOptions()

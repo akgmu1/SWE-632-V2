@@ -26,18 +26,21 @@ function addTestTasks() {
       completed: false,
       category: DEFAULT_CATEGORY,
       dueDate: dateTrim(new Date()),
+      created: dateTrim(new Date()),
     },
     {
       title: 'Test 2',
       completed: true,
       category: DEFAULT_CATEGORY,
       dueDate: dateTrim(new Date()),
+      created: dateTrim(new Date()),
     },
     {
       title: 'Test 3',
       completed: false,
       category: DEFAULT_CATEGORY,
       dueDate: dateTrim(new Date()),
+      created: dateTrim(new Date()),
     },
   ]
   for (const task of TASKS) {

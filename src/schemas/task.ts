@@ -9,6 +9,7 @@ const taskSchema = z.object({
   completed: z.boolean(),
   category: z.number(),
   dueDate: z.coerce.date(),
+  created: z.coerce.date(),
 })
 
 export type Task = z.infer<typeof taskSchema>

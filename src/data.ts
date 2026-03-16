@@ -1,5 +1,8 @@
 import { z, ZodObject } from 'zod'
 
+// Prefix used for key names, to keep site working across different versions
+const VERSION_PREFIX = 'v2'
+
 type ManagerHooks<T> = {
   onStartup?: (data: T) => void
   onUpdate?: (oldData: T, newData: T) => void
@@ -16,7 +19,7 @@ export class DataManager<TSchema extends z.ZodTypeAny> {
 
   constructor(schema: TSchema, key: string, hooks?: ManagerHooks<z.infer<TSchema>>) {
     this.schema = schema
-    this.key = key
+    this.key = `${VERSION_PREFIX}-${key}`
     this.hooks = hooks
 
     const data = this.load()
@@ -51,8 +54,11 @@ export class DataManager<TSchema extends z.ZodTypeAny> {
     }
   }
 
-  public save(input: z.infer<TSchema>) {
-    const prevData = this.load()
+  public save(input: z.infer<TSchema>, ignoreHook: boolean = false) {
+    let prevData = undefined
+    if (!ignoreHook) {
+      prevData = this.load()
+    }
 
     localStorage.setItem(this.key, JSON.stringify(input))
 
@@ -81,7 +87,7 @@ export class ArrayDataManager<TObjectSchema extends ZodObject<any>> extends Data
       const data = this.schema.parse(parsed)
       return Array.isArray(data) ? data : []
     } catch {
-      this.save([])
+      this.save([], true)
       return []
     }
   }
@@ -189,7 +195,7 @@ export class IdArrayDataManager<
     hooks?: ManagerHooks<z.infer<TObjectSchema>[]>,
   ) {
     super(elementSchema, key, hooks)
-    this.counterKey = `${key}-id-counter`
+    this.counterKey = `${VERSION_PREFIX}-${key}-id-counter`
   }
 
   private nextId(): number {
