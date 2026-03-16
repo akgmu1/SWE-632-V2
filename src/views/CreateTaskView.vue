@@ -36,7 +36,7 @@ const rememberedOptionsSchema = z.object({
 const rememberedOptions = new DataManager(rememberedOptionsSchema, 'add-task-remembered-options')
 
 const categories = ref<Category[]>(categoryManager.all())
-const selectedCategory = ref<number>(0)
+const selectedCategory = ref<number>(DEFAULT_CATEGORY)
 const newCategoryName = ref('')
 const newCategoryColor = ref(randomColor())
 const currentCategory = computed(() => {
@@ -45,6 +45,7 @@ const currentCategory = computed(() => {
 
 function loadRememberedOptions() {
   const x = rememberedOptions.load()
+  console.log(x)
   if (x === undefined) {
     return
   }
