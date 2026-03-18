@@ -5,6 +5,7 @@ import SearchBar from '@/components/SearchBar.vue'
 import TaskItem from '@/components/TaskItem.vue'
 import UpdateTaskModal from '@/components/UpdateTaskModal.vue'
 import { HomeState } from '@/enums'
+import { sortTasks, SortOption } from '@/helper'
 import { categoryManager, type Category } from '@/schemas/category'
 import { deletedTaskManager, taskManager, type Task } from '@/schemas/task'
 import { timeEntryManager, type CreateTimeEntry } from '@/schemas/timeEntry'
@@ -22,23 +23,37 @@ function logTime(entry: CreateTimeEntry) {
   refreshTasks()
 }
 
+const sortOption = ref<SortOption>(SortOption.Created)
 const categories: Ref<Category[]> = ref(categoryManager.all())
 const tasks: Ref<Task[]> = ref(taskManager.all())
 const deletedTasks: Ref<Task[]> = ref(deletedTaskManager.all())
 
-const q = computed(() => search.value.trim().toLowerCase())
 const search = ref('')
+const q = computed(() => search.value.trim().toLowerCase())
 
 const activeTasks = computed(() =>
-  tasks.value.filter((t) => !t.completed && (!q.value || t.title.toLowerCase().includes(q.value))),
+  sortTasks(
+    tasks.value.filter(
+      (t) => !t.completed && (!q.value || t.title.toLowerCase().includes(q.value)),
+    ),
+    sortOption.value,
+  ),
 )
 
 const completedTasks = computed(() =>
-  tasks.value.filter((t) => t.completed && (!q.value || t.title.toLowerCase().includes(q.value))),
+  sortTasks(
+    tasks.value.filter(
+      (t) => t.completed && (!q.value || t.title.toLowerCase().includes(q.value)),
+    ),
+    sortOption.value,
+  ),
 )
 
 const filteredDeletedTasks = computed(() =>
-  deletedTasks.value.filter((t) => !q.value || t.title.toLowerCase().includes(q.value)),
+  sortTasks(
+    deletedTasks.value.filter((t) => !q.value || t.title.toLowerCase().includes(q.value)),
+    sortOption.value,
+  ),
 )
 
 function refreshTasks() {
@@ -107,6 +122,7 @@ function taskClicked(id: number, isDeleted: boolean) {
 
 const confirmClearRecentlyDeleteModalRef: Ref<InstanceType<typeof ConfirmationModal> | null> =
   ref(null)
+
 function clearRecentlyDeletedTasks() {
   deletedTaskManager.reset()
   refreshTasks()
@@ -132,10 +148,35 @@ const baseViewTitle = computed(() => {
 
 <template>
   <BaseView :title="baseViewTitle">
-    <div class="mb-4 flex justify-center">
-      <SearchBar v-model="search" />
-    </div>
 
+<div class="mb-4 flex justify-center"> <SearchBar v-model="search" /> </div>
+
+
+ 
+
+    <div
+      v-if="props.state === HomeState.Default && tasks.length > 0"
+      class="alert alert-info mb-4"
+    >
+      <span>
+        To view statistics, first go to
+        <RouterLink to="/edit" class="font-semibold underline text-primary">
+          Edit
+        </RouterLink>
+        and log time for a task.
+      </span>
+    </div>
+<div class="mb-4 flex justify-end">
+  <label class="flex items-center gap-2">
+    <span class="text-sm font-medium">Sort by:</span>
+    <select v-model="sortOption" class="select select-bordered select-sm w-auto">
+      <option :value="SortOption.Name">Name (alphabetical)</option>
+      <option :value="SortOption.Created">Created Date</option>
+      <option :value="SortOption.Due">Due Date</option>
+    </select>
+  </label>
+</div>
+      
     <div class="tabs tabs-lift">
       <input type="radio" name="task_tabs" class="tab" aria-label="Active" checked />
       <div class="tab-content border-base-300 bg-base-100 p-3">
@@ -172,7 +213,6 @@ const baseViewTitle = computed(() => {
           />
         </div>
         <div v-else-if="activeTasks.length > 0" class="py-2">
-          <!-- There are tasks, but none are marked as completed -->
           No tasks are marked as completed. Click on the checkbox
           <div class="whitespace-nowrap inline-block">
             (
@@ -185,8 +225,6 @@ const baseViewTitle = computed(() => {
           next to an active task in order to mark it as complete.
         </div>
         <div v-else class="py-2">
-          <!-- There are no tasks to be marked, so the only thing
-           a user should do is create one instead -->
           There are no active tasks to be completed, click
           <RouterLink to="/create" class="link link-primary">here</RouterLink>
           to create a task.
@@ -209,7 +247,7 @@ const baseViewTitle = computed(() => {
               Clear
             </button>
           </div>
-          <div v-if="deletedTasks.length > 0" class="flex flex-col gap-2">
+          <div v-if="filteredDeletedTasks.length > 0" class="flex flex-col gap-2">
             <TaskItem
               v-for="task in filteredDeletedTasks"
               :key="task.id"
@@ -228,10 +266,8 @@ const baseViewTitle = computed(() => {
     </div>
   </BaseView>
 
-  <!-- Update a task -->
   <UpdateTaskModal ref="updateModalRef" @updateTask="updateTask" />
 
-  <!-- Confirming to clear all recently deleted tasks -->
   <ConfirmationModal
     ref="confirmClearRecentlyDeleteModalRef"
     title="Clear Recently Deleted"
@@ -242,20 +278,17 @@ const baseViewTitle = computed(() => {
     {{ deletedTasks.length == 1 ? 'task' : 'tasks' }}?
   </ConfirmationModal>
 
-  <!-- Confirming to delete a task -->
   <ConfirmationModal ref="confirmDeleteModalRef" title="Delete Task" @confirm="confirmDelete">
     Are you sure you want to delete task?
     <div class="pt-2 text-center font-bold">"{{ selectedTask?.title }}"</div>
     <template #confirm> Delete </template>
   </ConfirmationModal>
 
-  <!-- Confirming to recover a task -->
   <ConfirmationModal ref="confirmRecoverModalRef" title="Recover Task" @confirm="confirmRecover">
     Are you sure you want to recover task?
     <div class="pt-2 text-center font-bold">"{{ selectedTask?.title }}"</div>
     <template #confirm> Recover </template>
   </ConfirmationModal>
 
-  <!-- Log Time for a Task -->
   <LogTimeModal ref="logTimeModalRef" @log-time="logTime" />
 </template>

@@ -156,7 +156,9 @@ watch(showAll, (value) => {
 </script>
 
 <template>
+  
   <BaseView title="Statistics">
+  
     <div v-if="timeEntries.length > 0" class="flex">
       <Doughnut :data="chartData" :options="chartOptions" />
     </div>
@@ -199,6 +201,16 @@ watch(showAll, (value) => {
         </div>
       </div>
     </div>
-    <div v-else>No hours logged</div>
+    <div v-else class="mt-6 rounded border border-dashed border-base-300 bg-base-100 p-5">
+  <div class="font-semibold">No statistics available yet</div>
+  <div class="mt-2 text-sm text-base-content/70">
+    No time has been logged for any task. To generate statistics, open the
+    <span class="font-semibold">Edit</span> page and click
+    <span class="font-semibold">Log Time</span> on a task.
+  </div>
+  <div class="mt-4">
+    <RouterLink to="/edit" class="btn btn-primary btn-sm">Go to Edit</RouterLink>
+  </div>
+</div>
   </BaseView>
 </template>

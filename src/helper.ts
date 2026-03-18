@@ -15,3 +15,28 @@ export function randomColor(): string {
     .toString(16)
     .padStart(6, '0')}`
 }
+
+import type { Task } from '@/schemas/task'
+export enum SortOption {
+  Name = 'name',
+  Created = 'created',
+  Due = 'due',
+}
+
+export function sortTasks(tasks: Task[], sortOption: SortOption): Task[] {
+  return [...tasks].sort((a, b) => {
+    switch (sortOption) {
+      case SortOption.Name:
+        return a.title.localeCompare(b.title)
+
+      case SortOption.Created:
+        return a.id - b.id
+
+      case SortOption.Due:
+        return a.dueDate.getTime() - b.dueDate.getTime()
+
+      default:
+        return 0
+    }
+  })
+}

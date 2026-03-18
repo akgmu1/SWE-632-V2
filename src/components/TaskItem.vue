@@ -41,10 +41,11 @@ const taskTimeEntries = computed(() => {
   return timeEntryManager.filterBy('taskId', props.task.id)
 })
 
+const hasLoggedTime = computed(() => taskTimeEntries.value.length > 0)
+
 const dueLabel = computed(() => {
   const rawDate = props.task.dueDate
 
-  // works best if dueDate is "YYYY-MM-DD" (from <input type="date">)
   if (Number.isNaN(rawDate.getTime())) return ''
   const date = dateTrim(rawDate)
 
@@ -100,7 +101,6 @@ const subtaskProgress = computed(() => {
     }"
     @click="emits('clicked', props.task.id, props.isDeleted)"
   >
-    <!-- left -->
     <div class="flex min-w-0 items-center gap-3">
       <input
         class="checkbox m-0"
@@ -112,11 +112,9 @@ const subtaskProgress = computed(() => {
         @change="onChange(($event.target as HTMLInputElement).checked)"
       />
 
-      <!-- category color dot -->
       <CategoryColor v-if="taskCategory" :category="taskCategory" :size="4" />
 
       <div class="min-w-0 flex-1">
-        <!-- Row 1: title + progress badge -->
         <div class="flex min-w-0 items-center gap-2">
           <div
             class="flex-2 truncate"
@@ -130,7 +128,6 @@ const subtaskProgress = computed(() => {
           </span>
         </div>
 
-        <!-- Row 2: subtasks list (read-only) -->
         <div v-if="taskSubtasks.length" class="mt-2 space-y-1 pl-1 text-sm opacity-80">
           <div v-for="s in taskSubtasks" :key="s.id" class="flex min-w-0 items-center gap-2">
             <input class="checkbox checkbox-xs" type="checkbox" :checked="s.completed" disabled />
@@ -140,25 +137,34 @@ const subtaskProgress = computed(() => {
           </div>
         </div>
 
-        <!-- Row 3: badges + actions -->
         <div class="mt-2 flex flex-wrap items-center gap-2">
-          <span v-if="taskCategory" class="badge badge-outline">{{ taskCategory.name }}</span>
-          <span v-if="totalHoursLabel" class="badge badge-neutral"
-            >{{ totalHoursLabel }} worked</span
-          >
+          <span v-if="taskCategory" class="badge badge-outline">
+            {{ taskCategory.name }}
+          </span>
+
+          <span v-if="totalHoursLabel" class="badge badge-neutral">
+            {{ totalHoursLabel }} worked
+          </span>
+
+          <span v-else-if="homeStateUpdate" class="badge badge-warning">
+            No time logged yet
+          </span>
 
           <button
             v-if="homeStateUpdate"
-            class="btn btn-ghost btn-xs"
+            class="btn btn-primary btn-xs"
             @click.stop="emits('logTimeClicked', props.task)"
           >
-            Log time
+            {{ hasLoggedTime ? 'Log Time' : 'Log First Time Entry' }}
           </button>
+        </div>
+
+        <div v-if="homeStateUpdate && !hasLoggedTime" class="mt-2 text-xs text-base-content/70">
+          Log time for this task before it appears in Statistics.
         </div>
       </div>
     </div>
 
-    <!-- right -->
     <div class="shrink-0">
       <ToolTip :tip="task.dueDate.toDateString()">
         <span v-if="dueLabel" class="badge" :class="dueBadgeClass">{{ dueLabel }}</span>
